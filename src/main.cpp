@@ -3,7 +3,7 @@
 #include "TFT_eSPI.h"
 
 #include <Arduino.h>
-// #include <vector>
+#include <vector>
 
 ///< possible joystick cursor moves
 enum class Cursor_action
@@ -43,7 +43,7 @@ unsigned long last_loop_time = millis();
 
 Mode m_mode = Mode::chill;
 
-// std::vector<spend_time> counters;
+std::vector<spend_time> counters;
 
 void check_button()
 {
@@ -96,9 +96,23 @@ void print_time(TimeSpan time)
   m_screen.drawString(text, 80, 110);
 }
 
+String format_two_digits(uint8_t number)
+{
+  return (number < 10) ? "0" + String(number) : String(number);
+}
 void print_date(DateTime date)
 {
-  String text = String(date.hour()) + ":" + String(date.minute());
+  uint8_t hour = date.hour();
+  uint8_t minute = date.minute();
+  uint8_t day = date.day();
+  uint8_t month = date.month();
+
+  String formattedHour = format_two_digits(hour);
+  String formattedMinute = format_two_digits(minute);
+  String formattedDay = format_two_digits(day);
+  String formattedMonth = format_two_digits(month);
+
+  String text = formattedHour + ":" + formattedMinute;
 
   m_screen.setFreeFont(&FreeSansBold12pt7b);
 
@@ -106,7 +120,7 @@ void print_date(DateTime date)
 
   m_screen.drawString(text, 60, 185);
 
-  text = String(date.day()) + "." + String(date.month());
+  text = formattedDay + "." + formattedMonth;
   m_screen.drawString(text, 60, 210);
 }
 
@@ -157,6 +171,8 @@ void setup()
   m_screen.fillScreen(TFT_WHITE);
   print_date(m_date);
   print_time(0);
+
+  counters.push_back({30, 120, "Work", Mode::work});
 
   print_side_menu();
 }
