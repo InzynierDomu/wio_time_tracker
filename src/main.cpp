@@ -3,6 +3,8 @@
 #include "TFT_eSPI.h"
 
 #include <Arduino.h>
+#undef min
+#undef max
 #include <vector>
 
 ///< possible joystick cursor moves
