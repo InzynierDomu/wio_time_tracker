@@ -5,7 +5,9 @@
 #include <Arduino.h>
 #undef min
 #undef max
+#include <map>
 #include <vector>
+
 
 ///< possible joystick cursor moves
 enum class Cursor_action
@@ -28,10 +30,14 @@ enum class Mode
 
 struct spend_time
 {
+  spend_time(String _name)
+  : current_minutes(0)
+  , sum_minutes(0)
+  , name(_name)
+  {}
   uint16_t current_minutes;
   uint16_t sum_minutes;
   String name;
-  Mode mode;
 };
 
 RTC_SAMD51 rtc;
@@ -44,15 +50,86 @@ DateTime m_date;
 unsigned long last_loop_time = millis();
 
 Mode m_mode = Mode::chill;
+struct time_type
+{
+  std::vector<spend_time> counters;
+  uint8_t actual_position;
 
-std::vector<spend_time> counters;
+  String get_name(uint8_t position)
+  {
+    return counters[position].name;
+  }
 
+  uint8_t get_size()
+  {
+    return counters.size();
+  }
+
+  void add_counter(spend_time counter)
+  {
+    counters.push_back(counter);
+  }
+
+  bool check_min_position()
+  {
+    if (actual_position > 0)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  bool check_max_position()
+  {
+    if (actual_position < counters.size())
+    {
+      return false;
+    }
+    return true;
+  }
+};
+
+time_type counters_work;
+time_type counters_meetings;
+time_type counters_chill;
+
+void print_list_counters(time_type& counters)
+{
+  uint8_t posY = 10;
+  for (size_t i = 0; i < counters.get_size(); i++)
+  {
+    m_screen.drawString(counters.get_name(i), 185, posY);
+    posY += 26;
+  }
+}
+void print_side_menu(Mode mode, uint8_t position = 0)
+{
+  m_screen.fillRect(180, 0, 160, 240, TFT_LIGHTGREY);
+
+  int posY = 8 + (position * 26);
+  m_screen.fillRect(180, posY, 160, 26, TFT_DARKGREY);
+
+  m_screen.setFreeFont(&FreeSansBold12pt7b);
+
+  switch (mode)
+  {
+    case Mode::chill:
+      print_list_counters(counters_chill);
+      break;
+    case Mode::work:
+      print_list_counters(counters_work);
+      break;
+    case Mode::meeting:
+      print_list_counters(counters_meetings);
+      break;
+    default:
+      break;
+  }
+}
 void check_button()
 {
   if (digitalRead(WIO_5S_DOWN) == LOW)
-  {
-    // (m_controller->*m_callback)(Cursor_move::down);
-  }
+  {}
   else if (digitalRead(WIO_5S_UP) == LOW)
   {
     // (m_controller->*m_callback)(Cursor_move::up);
@@ -69,17 +146,20 @@ void check_button()
   {
     // (m_controller->*m_callback)(Cursor_move::center);
   }
-  else if (digitalRead(WIO_KEY_A) == LOW)
+  else if (digitalRead(WIO_KEY_C) == LOW)
   {
     m_mode = Mode::work;
+    print_side_menu(m_mode);
   }
   else if (digitalRead(WIO_KEY_B) == LOW)
   {
     m_mode = Mode::meeting;
+    print_side_menu(m_mode);
   }
-  else if (digitalRead(WIO_KEY_C) == LOW)
+  else if (digitalRead(WIO_KEY_A) == LOW)
   {
     m_mode = Mode::chill;
+    print_side_menu(m_mode);
   }
 }
 
@@ -126,18 +206,6 @@ void print_date(DateTime date)
   m_screen.drawString(text, 60, 210);
 }
 
-void print_side_menu()
-{
-  m_screen.fillRect(180, 0, 160, 240, TFT_LIGHTGREY);
-  m_screen.fillRect(180, 34, 160, 26, TFT_DARKGREY);
-
-  m_screen.setFreeFont(&FreeSansBold12pt7b);
-
-  m_screen.drawString("opcja 1", 185, 10);
-  m_screen.drawString("opcja 2", 185, 36);
-  m_screen.drawString("opcja 3", 185, 62);
-}
-
 bool check_date(DateTime date)
 {
   auto now = rtc.now();
@@ -174,18 +242,34 @@ void setup()
   print_date(m_date);
   print_time(0);
 
-  counters.push_back({30, 120, "Work", Mode::work});
+  counters_work.add_counter({spend_time("Praca")});
+  counters_work.add_counter({spend_time("Projekt")});
+  counters_work.add_counter({spend_time("Blog")});
+  counters_work.add_counter({spend_time("Dom")});
+  counters_work.add_counter({spend_time("Planowanie")});
+  counters_work.add_counter({spend_time("Nauka")});
 
-  print_side_menu();
+  counters_meetings.add_counter({spend_time("Praca")});
+  counters_meetings.add_counter({spend_time("Blogowe")});
+  counters_meetings.add_counter({spend_time("Projekty")});
+  counters_meetings.add_counter({spend_time("Dom")});
+
+  counters_chill.add_counter({spend_time("YT")});
+  counters_chill.add_counter({spend_time("Gry")});
+  counters_chill.add_counter({spend_time("IG")});
+  counters_chill.add_counter({spend_time("Offline")});
+
+  print_side_menu(m_mode);
 }
 
 void loop()
 {
-  if (digitalRead(WIO_5S_PRESS) == LOW)
-  {
-    startTime = rtc.now();
-    running = true;
-  }
+  // if (digitalRead(WIO_5S_PRESS) == LOW)
+  // {
+  //   startTime = rtc.now();
+  //   running = true;
+  // }
+  check_button();
 
   unsigned long loop_time = millis();
   if (loop_time - last_loop_time > checkt_time)
