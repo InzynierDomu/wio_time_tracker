@@ -49,6 +49,8 @@ uint16_t checkt_time = 30000;
 DateTime m_date;
 unsigned long last_loop_time = millis();
 
+const unsigned long debounce_delay = 400;
+
 Mode m_mode = Mode::chill;
 struct time_type
 {
@@ -74,25 +76,27 @@ struct time_type
   {
     if (actual_position > 0)
     {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   bool check_max_position()
   {
     if (actual_position < counters.size())
     {
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 };
+
 
 time_type counters_work;
 time_type counters_meetings;
 time_type counters_chill;
 
+std::map<Mode, time_type> times;
 void print_list_counters(time_type& counters)
 {
   uint8_t posY = 10;
@@ -102,45 +106,50 @@ void print_list_counters(time_type& counters)
     posY += 26;
   }
 }
-void print_side_menu(Mode mode, uint8_t position = 0)
+void print_side_menu(time_type& counters)
 {
   m_screen.fillRect(180, 0, 160, 240, TFT_LIGHTGREY);
 
-  int posY = 8 + (position * 26);
+  int posY = 8 + (counters.actual_position * 26);
   m_screen.fillRect(180, posY, 160, 26, TFT_DARKGREY);
 
   m_screen.setFreeFont(&FreeSansBold12pt7b);
 
-  switch (mode)
-  {
-    case Mode::chill:
-      print_list_counters(counters_chill);
-      break;
-    case Mode::work:
-      print_list_counters(counters_work);
-      break;
-    case Mode::meeting:
-      print_list_counters(counters_meetings);
-      break;
-    default:
-      break;
-  }
+  print_list_counters(counters);
 }
 void check_button()
 {
-  if (digitalRead(WIO_5S_DOWN) == LOW)
-  {}
-  else if (digitalRead(WIO_5S_UP) == LOW)
+  static unsigned long last_button_press_time = 0;
+  unsigned long current_time = millis();
+
+  if (current_time - last_button_press_time < debounce_delay)
   {
-    // (m_controller->*m_callback)(Cursor_move::up);
+    return;
   }
-  else if (digitalRead(WIO_5S_RIGHT) == LOW)
+
+  if (digitalRead(WIO_5S_UP) == LOW || digitalRead(WIO_5S_DOWN) == LOW || digitalRead(WIO_5S_PRESS) == LOW ||
+      digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW)
   {
-    // (m_controller->*m_callback)(Cursor_move::right);
+    last_button_press_time = current_time;
   }
-  else if (digitalRead(WIO_5S_LEFT) == LOW)
+
+  if (digitalRead(WIO_5S_UP) == LOW)
   {
-    // (m_controller->*m_callback)(Cursor_move::left);
+    auto& counter = times[m_mode];
+    if (counter.check_min_position())
+    {
+      counter.actual_position--;
+      print_side_menu(counter);
+    }
+  }
+  else if (digitalRead(WIO_5S_DOWN) == LOW)
+  {
+    auto& counter = times[m_mode];
+    if (counter.check_max_position())
+    {
+      counter.actual_position++;
+      print_side_menu(counter);
+    }
   }
   else if (digitalRead(WIO_5S_PRESS) == LOW)
   {
@@ -148,18 +157,21 @@ void check_button()
   }
   else if (digitalRead(WIO_KEY_C) == LOW)
   {
-    m_mode = Mode::work;
-    print_side_menu(m_mode);
+    m_mode = Mode::chill;
+    auto& counter = times[m_mode];
+    print_side_menu(counter);
   }
   else if (digitalRead(WIO_KEY_B) == LOW)
   {
-    m_mode = Mode::meeting;
-    print_side_menu(m_mode);
+    m_mode = Mode::work;
+    auto& counter = times[m_mode];
+    print_side_menu(counter);
   }
   else if (digitalRead(WIO_KEY_A) == LOW)
   {
-    m_mode = Mode::chill;
-    print_side_menu(m_mode);
+    m_mode = Mode::meeting;
+    auto& counter = times[m_mode];
+    print_side_menu(counter);
   }
 }
 
@@ -259,7 +271,12 @@ void setup()
   counters_chill.add_counter({spend_time("IG")});
   counters_chill.add_counter({spend_time("Offline")});
 
-  print_side_menu(m_mode);
+  times[Mode::work] = counters_work;
+  times[Mode::meeting] = counters_meetings;
+  times[Mode::chill] = counters_chill;
+
+  auto counter = times[m_mode];
+  print_side_menu(counter);
 }
 
 void loop()
