@@ -1,13 +1,13 @@
 #include "DateTime.h"
 #include "RTC_SAMD51.h"
 #include "TFT_eSPI.h"
+#include "time_type.h"
 
 #include <Arduino.h>
 #undef min
 #undef max
 #include <map>
 #include <vector>
-
 
 ///< possible joystick cursor moves
 enum class Cursor_action
@@ -28,69 +28,17 @@ enum class Mode
   chill
 };
 
-struct spend_time
-{
-  spend_time(String _name)
-  : current_minutes(0)
-  , sum_minutes(0)
-  , name(_name)
-  {}
-  uint16_t current_minutes;
-  uint16_t sum_minutes;
-  String name;
-};
-
 RTC_SAMD51 rtc;
 TFT_eSPI m_screen; ///< TFT screen 320x240
 
-DateTime startTime;
 bool running = false;
 uint16_t checkt_time = 30000;
 DateTime m_date;
 unsigned long last_loop_time = millis();
 
-const unsigned long debounce_delay = 400;
+const unsigned long debounce_delay = 500;
 
 Mode m_mode = Mode::chill;
-struct time_type
-{
-  std::vector<spend_time> counters;
-  uint8_t actual_position;
-
-  String get_name(uint8_t position)
-  {
-    return counters[position].name;
-  }
-
-  uint8_t get_size()
-  {
-    return counters.size();
-  }
-
-  void add_counter(spend_time counter)
-  {
-    counters.push_back(counter);
-  }
-
-  bool check_min_position()
-  {
-    if (actual_position > 0)
-    {
-      return true;
-    }
-    return false;
-  }
-
-  bool check_max_position()
-  {
-    if (actual_position < counters.size())
-    {
-      return true;
-    }
-    return false;
-  }
-};
-
 
 time_type counters_work;
 time_type counters_meetings;
@@ -140,6 +88,7 @@ void check_button()
     {
       counter.actual_position--;
       print_side_menu(counter);
+      running = false;
     }
   }
   else if (digitalRead(WIO_5S_DOWN) == LOW)
@@ -149,11 +98,14 @@ void check_button()
     {
       counter.actual_position++;
       print_side_menu(counter);
+      running = false;
     }
   }
   else if (digitalRead(WIO_5S_PRESS) == LOW)
   {
-    // (m_controller->*m_callback)(Cursor_move::center);
+    auto& counter = times[m_mode];
+    counter.get_current_counter().start_time = rtc.now();
+    running = !running;
   }
   else if (digitalRead(WIO_KEY_C) == LOW)
   {
@@ -180,19 +132,17 @@ void clear_part_screen(const uint16_t position_x, const uint16_t position_y, con
   m_screen.fillRect(position_x, position_y, width, height, TFT_WHITE);
 }
 
-void print_time(TimeSpan time)
-{
-  String text = String(time.minutes());
-  m_screen.setFreeFont(&FreeSansBold24pt7b);
-  clear_part_screen(80, 50, 60, 80);
-  m_screen.drawString(text, 80, 50);
-
-  m_screen.drawString(text, 80, 110);
-}
-
 String format_two_digits(uint8_t number)
 {
   return (number < 10) ? "0" + String(number) : String(number);
+}
+void print_time(uint16_t time, uint16_t sum_time)
+{
+  m_screen.setFreeFont(&FreeSansBold24pt7b);
+  clear_part_screen(80, 50, 60, 80);
+  m_screen.drawString(String(time), 80, 50);
+
+  m_screen.drawString(String(sum_time), 80, 110);
 }
 void print_date(DateTime date)
 {
@@ -228,6 +178,11 @@ bool check_date(DateTime date)
   m_date = now;
   return true;
 }
+
+uint16_t timespan_to_minutes(const TimeSpan& span)
+{
+  return static_cast<uint16_t>(span.totalseconds() / 60);
+}
 void setup()
 {
   Serial.begin(115200);
@@ -252,7 +207,7 @@ void setup()
   m_screen.setTextColor(TFT_BLACK);
   m_screen.fillScreen(TFT_WHITE);
   print_date(m_date);
-  print_time(0);
+  print_time(0, 0);
 
   counters_work.add_counter({spend_time("Praca")});
   counters_work.add_counter({spend_time("Projekt")});
@@ -281,23 +236,20 @@ void setup()
 
 void loop()
 {
-  // if (digitalRead(WIO_5S_PRESS) == LOW)
-  // {
-  //   startTime = rtc.now();
-  //   running = true;
-  // }
   check_button();
 
   unsigned long loop_time = millis();
   if (loop_time - last_loop_time > checkt_time)
   {
     last_loop_time = loop_time;
-    TimeSpan span = 0;
+    // TimeSpan span = 0;
     if (running)
     {
       DateTime now = rtc.now();
-      span = now - startTime;
-      print_time(span);
+      auto& counter = times[m_mode];
+      auto diff = now - counter.get_current_counter().start_time;
+      counter.get_current_counter().current_minutes = timespan_to_minutes(diff);
+      print_time(counter.get_current_counter().current_minutes, counter.get_current_counter().sum_minutes);
     }
     m_date = rtc.now();
     print_date(m_date);
