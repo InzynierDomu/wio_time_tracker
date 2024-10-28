@@ -25,6 +25,9 @@ class time_type
   public:
   String get_name(uint8_t position);
   spend_time& get_current_counter();
+  void update_current_time(DateTime& current_time);
+  void reset_current_time();
+  void clear_sum_times();
   uint8_t get_size();
   void add_counter(spend_time counter);
   bool check_min_position();
