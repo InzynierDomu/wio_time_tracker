@@ -1,9 +1,10 @@
 #include "DateTime.h"
 #include "RTC_SAMD51.h"
-#include "TFT_eSPI.h"
-#include "time_type.h"
+#include "gui.h"
+#include "time_category.h"
 
 #include <Arduino.h>
+
 #undef min
 #undef max
 #include <map>
@@ -29,7 +30,8 @@ enum class Mode
 };
 
 RTC_SAMD51 rtc;
-TFT_eSPI m_screen; ///< TFT screen 320x240
+// TFT_eSPI m_screen; ///< TFT screen 320x240
+gui m_gui;
 
 bool running = false;
 uint16_t checkt_time = 30000;
@@ -40,86 +42,12 @@ const unsigned long debounce_delay = 500;
 
 Mode m_mode = Mode::chill;
 
-time_type counters_work;
-time_type counters_meetings;
-time_type counters_chill;
+time_category counters_work;
+time_category counters_meetings;
+time_category counters_chill;
 
-std::map<Mode, time_type> times;
-void print_list_counters(time_type& counters)
-{
-  uint8_t posY = 10;
-  for (size_t i = 0; i < counters.get_size(); i++)
-  {
-    m_screen.drawString(counters.get_name(i), 185, posY);
-    posY += 26;
-  }
-}
-void print_side_menu(time_type& counters)
-{
-  m_screen.fillRect(180, 0, 160, 240, TFT_LIGHTGREY);
+std::map<Mode, time_category> times;
 
-  int posY = 8 + (counters.actual_position * 26);
-  m_screen.fillRect(180, posY, 160, 26, TFT_DARKGREY);
-
-  m_screen.setFreeFont(&FreeSansBold12pt7b);
-
-  print_list_counters(counters);
-}
-
-void clear_part_screen(const uint16_t position_x, const uint16_t position_y, const uint16_t width, const uint16_t height)
-{
-  if (running)
-  {
-    m_screen.fillRect(position_x, position_y, width, height, TFT_DARKGREEN);
-  }
-  else
-  {
-    m_screen.fillRect(position_x, position_y, width, height, TFT_WHITE);
-  }
-}
-
-void print_time(spend_time& counter)
-{
-  m_screen.setFreeFont(&FreeSansBold24pt7b);
-  clear_part_screen(80, 50, 60, 110);
-  m_screen.drawString(String(counter.current_minutes), 80, 50);
-
-  m_screen.drawString(String(counter.sum_minutes), 80, 110);
-}
-
-String format_two_digits(uint8_t number)
-{
-  return (number < 10) ? "0" + String(number) : String(number);
-}
-void print_date(DateTime date)
-{
-  uint8_t hour = date.hour();
-  uint8_t minute = date.minute();
-  uint8_t day = date.day();
-  uint8_t month = date.month();
-
-  String formattedHour = format_two_digits(hour);
-  String formattedMinute = format_two_digits(minute);
-  String formattedDay = format_two_digits(day);
-  String formattedMonth = format_two_digits(month);
-
-  String text = formattedHour + ":" + formattedMinute;
-
-  m_screen.setFreeFont(&FreeSansBold12pt7b);
-
-  clear_part_screen(60, 185, 110, 110);
-
-  m_screen.drawString(text, 60, 185);
-
-  text = formattedDay + "." + formattedMonth;
-  m_screen.drawString(text, 60, 210);
-}
-void refresh_left_side(spend_time& counter)
-{
-  clear_part_screen(0, 0, 180, 240);
-  print_date(rtc.now());
-  print_time(counter);
-}
 void check_button()
 {
   static unsigned long last_button_press_time = 0;
@@ -142,10 +70,10 @@ void check_button()
     if (counter.check_min_position())
     {
       counter.actual_position--;
-      print_side_menu(counter);
+      m_gui.print_side_menu(counter);
       running = false;
       counter.reset_current_time();
-      refresh_left_side(counter.get_current_counter());
+      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
     }
   }
   else if (digitalRead(WIO_5S_DOWN) == LOW)
@@ -154,10 +82,10 @@ void check_button()
     if (counter.check_max_position())
     {
       counter.actual_position++;
-      print_side_menu(counter);
+      m_gui.print_side_menu(counter);
       running = false;
       counter.reset_current_time();
-      refresh_left_side(counter.get_current_counter());
+      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
     }
   }
   else if (digitalRead(WIO_5S_PRESS) == LOW)
@@ -169,35 +97,37 @@ void check_button()
     {
       counter.reset_current_time();
     }
-    refresh_left_side(counter.get_current_counter());
+    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
   }
   else if (digitalRead(WIO_KEY_C) == LOW)
   {
     m_mode = Mode::chill;
     auto& counter = times[m_mode];
-    print_side_menu(counter);
+    m_gui.print_side_menu(counter);
+    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
   }
   else if (digitalRead(WIO_KEY_B) == LOW)
   {
     auto& old_counter = times[m_mode];
     running = false;
     old_counter.reset_current_time();
-    refresh_left_side(old_counter.get_current_counter());
+    m_gui.refresh_left_side(running, old_counter.get_current_counter(), rtc.now());
 
     m_mode = Mode::work;
     auto& counter = times[m_mode];
-    print_side_menu(counter);
+    m_gui.print_side_menu(counter);
+    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
   }
   else if (digitalRead(WIO_KEY_A) == LOW)
   {
     auto& old_counter = times[m_mode];
     running = false;
     old_counter.reset_current_time();
-    refresh_left_side(old_counter.get_current_counter());
 
     m_mode = Mode::meeting;
     auto& counter = times[m_mode];
-    print_side_menu(counter);
+    m_gui.print_side_menu(counter);
+    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
   }
 }
 
@@ -238,36 +168,33 @@ void setup()
   pinMode(WIO_KEY_B, INPUT);
   pinMode(WIO_KEY_C, INPUT);
 
-  m_screen.begin();
-  m_screen.setRotation(3);
-  m_screen.setTextColor(TFT_BLACK);
-  m_screen.fillScreen(TFT_WHITE);
-  print_date(m_date);
+  m_gui.init();
+  m_gui.print_date_time(running, m_date);
 
-  counters_work.add_counter({spend_time("Praca")});
-  counters_work.add_counter({spend_time("Projekt")});
-  counters_work.add_counter({spend_time("Blog")});
-  counters_work.add_counter({spend_time("Dom")});
-  counters_work.add_counter({spend_time("Planowanie")});
-  counters_work.add_counter({spend_time("Nauka")});
+  counters_work.add_counter({time_counter("Praca")});
+  counters_work.add_counter({time_counter("Projekt")});
+  counters_work.add_counter({time_counter("Blog")});
+  counters_work.add_counter({time_counter("Dom")});
+  counters_work.add_counter({time_counter("Planowanie")});
+  counters_work.add_counter({time_counter("Nauka")});
 
-  counters_meetings.add_counter({spend_time("Praca")});
-  counters_meetings.add_counter({spend_time("Blogowe")});
-  counters_meetings.add_counter({spend_time("Projekty")});
-  counters_meetings.add_counter({spend_time("Dom")});
+  counters_meetings.add_counter({time_counter("Praca")});
+  counters_meetings.add_counter({time_counter("Blogowe")});
+  counters_meetings.add_counter({time_counter("Projekty")});
+  counters_meetings.add_counter({time_counter("Dom")});
 
-  counters_chill.add_counter({spend_time("YT")});
-  counters_chill.add_counter({spend_time("Gry")});
-  counters_chill.add_counter({spend_time("IG")});
-  counters_chill.add_counter({spend_time("Offline")});
+  counters_chill.add_counter({time_counter("YT")});
+  counters_chill.add_counter({time_counter("Gry")});
+  counters_chill.add_counter({time_counter("IG")});
+  counters_chill.add_counter({time_counter("Offline")});
 
   times[Mode::work] = counters_work;
   times[Mode::meeting] = counters_meetings;
   times[Mode::chill] = counters_chill;
 
   auto counter = times[m_mode];
-  print_side_menu(counter);
-  print_time(counter.get_current_counter());
+  m_gui.print_side_menu(counter);
+  m_gui.print_time(running, counter.get_current_counter());
 }
 
 void loop()
@@ -283,9 +210,10 @@ void loop()
       DateTime now = rtc.now();
       auto& counter = times[m_mode];
       counter.update_current_time(now);
-      print_time(counter.get_current_counter());
+      m_gui.print_time(running, counter.get_current_counter());
     }
     m_date = rtc.now();
-    print_date(m_date);
+    m_gui.print_date_time(running, m_date);
+    check_date(m_date);
   }
 }

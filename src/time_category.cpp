@@ -1,18 +1,18 @@
-#include "time_type.h"
+#include "time_category.h"
 
-String time_type::get_name(uint8_t position)
+String time_category::get_name(uint8_t position)
 {
   return counters[position].name;
 }
 
-spend_time& time_type::get_current_counter()
+time_counter& time_category::get_current_counter()
 {
   return counters[actual_position];
 }
 
-void time_type::update_current_time(DateTime& current_time)
+void time_category::update_current_time(DateTime& current_time)
 {
-  spend_time& current = get_current_counter();
+  time_counter& current = get_current_counter();
 
   TimeSpan time_diff = current_time - current.start_time;
   uint16_t minutes = static_cast<uint16_t>(time_diff.totalseconds() / 60);
@@ -24,13 +24,13 @@ void time_type::update_current_time(DateTime& current_time)
   }
 }
 
-void time_type::reset_current_time()
+void time_category::reset_current_time()
 {
-  spend_time& current = get_current_counter();
+  time_counter& current = get_current_counter();
   current.current_minutes = 0;
 }
 
-void time_type::clear_sum_times()
+void time_category::clear_sum_times()
 {
   for (auto& counter : counters)
   {
@@ -38,17 +38,17 @@ void time_type::clear_sum_times()
   }
 }
 
-uint8_t time_type::get_size()
+uint8_t time_category::get_size()
 {
   return counters.size();
 }
 
-void time_type::add_counter(spend_time counter)
+void time_category::add_counter(time_counter counter)
 {
   counters.push_back(counter);
 }
 
-bool time_type::check_min_position()
+bool time_category::check_min_position()
 {
   if (actual_position > 0)
   {
@@ -57,7 +57,7 @@ bool time_type::check_min_position()
   return false;
 }
 
-bool time_type::check_max_position()
+bool time_category::check_max_position()
 {
   if (actual_position < counters.size())
   {
