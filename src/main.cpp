@@ -131,18 +131,16 @@ void check_button()
   }
 }
 
-bool check_date(DateTime date)
+void check_date(DateTime date)
 {
   auto now = rtc.now();
-  if (now == date)
+  if (now.day() != date.day())
   {
-    return false;
+    m_date = now;
     counters_work.clear_sum_times();
     counters_chill.clear_sum_times();
     counters_meetings.clear_sum_times();
   }
-  m_date = now;
-  return true;
 }
 
 uint16_t timespan_to_minutes(const TimeSpan& span)
@@ -151,10 +149,9 @@ uint16_t timespan_to_minutes(const TimeSpan& span)
 }
 void setup()
 {
-  Serial.begin(115200);
+  // Serial.begin(115200);
   rtc.begin();
   DateTime now = DateTime(F(__DATE__), F(__TIME__));
-  Serial.println("adjust time!");
   rtc.adjust(now);
 
   m_date = rtc.now();
