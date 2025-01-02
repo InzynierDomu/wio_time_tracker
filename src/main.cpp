@@ -2,6 +2,7 @@
 #include "RTC_SAMD51.h"
 #include "gui.h"
 #include "time_category.h"
+#include "sd_card.h"
 
 #include <Arduino.h>
 
