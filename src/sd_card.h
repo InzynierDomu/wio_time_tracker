@@ -1,5 +1,24 @@
+#pragma once
+
 #include <SPI.h>
 #include <Seeed_FS.h>
+#include <vector>
+// #include <string>
 #include "SD/Seeed_SD.h"
 
-File myFile; //Intialise the file Class and named it myFile
+#include <functional>
+
+class sd_card
+{
+  public:
+  sd_card();
+  ~sd_card();
+
+  void init();
+  void save();
+  void load(String filename);
+  bool load_counters_tree(const String& fileName, const std::function<void(const String&)>& processLine);
+
+  private:
+  File myFile;
+};

@@ -1,10 +1,12 @@
 #include "DateTime.h"
 #include "RTC_SAMD51.h"
+#include "counters_generator.h"
 #include "gui.h"
-#include "time_category.h"
 #include "sd_card.h"
+#include "time_category.h"
 
 #include <Arduino.h>
+
 
 #undef min
 #undef max
@@ -33,6 +35,7 @@ enum class Mode
 RTC_SAMD51 rtc;
 // TFT_eSPI m_screen; ///< TFT screen 320x240
 gui m_gui;
+sd_card sd;
 
 bool running = false;
 uint16_t checkt_time = 30000;
@@ -150,7 +153,7 @@ uint16_t timespan_to_minutes(const TimeSpan& span)
 }
 void setup()
 {
-  // Serial.begin(115200);
+  Serial.begin(115200);
   rtc.begin();
   DateTime now = DateTime(F(__DATE__), F(__TIME__));
   rtc.adjust(now);
@@ -168,6 +171,8 @@ void setup()
 
   m_gui.init();
   m_gui.print_date_time(running, m_date);
+
+  sd.init();
 
   counters_work.add_counter({time_counter("Praca")});
   counters_work.add_counter({time_counter("Projekt")});
@@ -213,5 +218,33 @@ void loop()
     m_date = rtc.now();
     m_gui.print_date_time(running, m_date);
     check_date(m_date);
+
+    // for tests
+    std::vector<String> list1, list2, list3;
+    counters_generator parser(list1, list2, list3);
+    // Odczyt i przetwarzanie pliku linia po linii
+    if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); }))
+    {
+      Serial.println("Błąd podczas odczytu pliku");
+    }
+
+    // Wyświetlenie wyników
+    Serial.println("Lista 1:");
+    for (const auto& item : list1)
+    {
+      Serial.println(item);
+    }
+
+    Serial.println("Lista 2:");
+    for (const auto& item : list2)
+    {
+      Serial.println(item);
+    }
+
+    Serial.println("Lista 3:");
+    for (const auto& item : list3)
+    {
+      Serial.println(item);
+    }
   }
 }
