@@ -27,26 +27,12 @@ void sd_card::save()
   }
 }
 
-void sd_card::load(String filename)
-{
-  Serial.println("loadng");
-  myFile = SD.open("test.txt", FILE_READ);
-  if (myFile)
-  {
-    while (myFile.available())
-    {
-      Serial.write(myFile.read());
-    }
-    myFile.close();
-  }
-}
-
 bool sd_card::load_counters_tree(const String& fileName, const std::function<void(const String&)>& processLine)
 {
   File file = SD.open(fileName, FILE_READ);
   if (!file)
   {
-    Serial.println("Nie udało się otworzyć pliku");
+    // error
     return false;
   }
 
@@ -56,17 +42,17 @@ bool sd_card::load_counters_tree(const String& fileName, const std::function<voi
     char c = file.read();
     if (c == '\n')
     {
-      processLine(line); // Przekaż linię do funkcji przetwarzającej
-      line = ""; // Zresetuj linię
+      processLine(line);
+      line = "";
     }
     else
     {
-      line += c; // Dodaj znak do linii
+      line += c;
     }
   }
 
   if (line.length() > 0)
-  { // Przetwórz ostatnią linię, jeśli istnieje
+  {
     processLine(line);
   }
 

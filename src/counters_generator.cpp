@@ -6,8 +6,7 @@ void counters_generator::processLine(const String& line)
   DeserializationError error = deserializeJson(doc, line);
   if (error)
   {
-    Serial.print("Błąd parsowania JSON w linii: ");
-    Serial.println(line);
+    //error
     return;
   }
 
@@ -16,12 +15,12 @@ void counters_generator::processLine(const String& line)
   appendToVector(doc["list3"].as<JsonArray>(), list3);
 }
 
-void counters_generator::appendToVector(const JsonArray& array, std::vector<String>& vec)
+void counters_generator::appendToVector(const JsonArray& array, time_category& vec)
 {
   if (array.isNull())
     return;
   for (const char* item : array)
   {
-    vec.push_back(String(item));
+    vec.add_counter(time_counter(String(item)));
   }
 }

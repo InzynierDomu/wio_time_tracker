@@ -16,7 +16,6 @@ class sd_card
 
   void init();
   void save();
-  void load(String filename);
   bool load_counters_tree(const String& fileName, const std::function<void(const String&)>& processLine);
 
   private:

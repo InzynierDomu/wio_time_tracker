@@ -174,22 +174,11 @@ void setup()
 
   sd.init();
 
-  counters_work.add_counter({time_counter("Praca")});
-  counters_work.add_counter({time_counter("Projekt")});
-  counters_work.add_counter({time_counter("Blog")});
-  counters_work.add_counter({time_counter("Dom")});
-  counters_work.add_counter({time_counter("Planowanie")});
-  counters_work.add_counter({time_counter("Nauka")});
-
-  counters_meetings.add_counter({time_counter("Praca")});
-  counters_meetings.add_counter({time_counter("Blogowe")});
-  counters_meetings.add_counter({time_counter("Projekty")});
-  counters_meetings.add_counter({time_counter("Dom")});
-
-  counters_chill.add_counter({time_counter("YT")});
-  counters_chill.add_counter({time_counter("Gry")});
-  counters_chill.add_counter({time_counter("IG")});
-  counters_chill.add_counter({time_counter("Offline")});
+  counters_generator parser(counters_work, counters_meetings, counters_chill);
+  if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); })) 
+  {
+    //error
+  }
 
   times[Mode::work] = counters_work;
   times[Mode::meeting] = counters_meetings;
@@ -218,33 +207,5 @@ void loop()
     m_date = rtc.now();
     m_gui.print_date_time(running, m_date);
     check_date(m_date);
-
-    // for tests
-    std::vector<String> list1, list2, list3;
-    counters_generator parser(list1, list2, list3);
-    // Odczyt i przetwarzanie pliku linia po linii
-    if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); }))
-    {
-      Serial.println("Błąd podczas odczytu pliku");
-    }
-
-    // Wyświetlenie wyników
-    Serial.println("Lista 1:");
-    for (const auto& item : list1)
-    {
-      Serial.println(item);
-    }
-
-    Serial.println("Lista 2:");
-    for (const auto& item : list2)
-    {
-      Serial.println(item);
-    }
-
-    Serial.println("Lista 3:");
-    for (const auto& item : list3)
-    {
-      Serial.println(item);
-    }
   }
 }
