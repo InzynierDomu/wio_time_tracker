@@ -5,6 +5,11 @@ String time_category::get_name(uint8_t position)
   return counters[position].name;
 }
 
+uint16_t time_category::get_sum_minutes(uint8_t position)
+{
+  return counters[position].sum_minutes;
+}
+
 time_counter& time_category::get_current_counter()
 {
   return counters[actual_position];

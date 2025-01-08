@@ -24,6 +24,7 @@ class time_category
 {
   public:
   String get_name(uint8_t position);
+  uint16_t get_sum_minutes(uint8_t position);
   time_counter& get_current_counter();
   void update_current_time(DateTime& current_time);
   void reset_current_time();

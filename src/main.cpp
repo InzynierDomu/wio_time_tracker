@@ -1,12 +1,12 @@
 #include "DateTime.h"
 #include "RTC_SAMD51.h"
 #include "counters_generator.h"
+#include "counters_saver.h"
 #include "gui.h"
 #include "sd_card.h"
 #include "time_category.h"
 
 #include <Arduino.h>
-
 
 #undef min
 #undef max
@@ -175,9 +175,9 @@ void setup()
   sd.init();
 
   counters_generator parser(counters_work, counters_meetings, counters_chill);
-  if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); })) 
+  if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); }))
   {
-    //error
+    // error
   }
 
   times[Mode::work] = counters_work;

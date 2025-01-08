@@ -1,29 +1,28 @@
 #include "sd_card.h"
 
-sd_card::sd_card() {}
-
-sd_card::~sd_card() {}
-
 void sd_card::init()
 {
-  Serial.print("Initializing SD card...");
   if (!SD.begin(SDCARD_SS_PIN, SDCARD_SPI))
   {
-    Serial.println("initialization failed!");
+    // error
     return;
   }
-  Serial.println("initialization done.");
 }
 
-void sd_card::save()
+void sd_card::clear_file()
 {
-  Serial.println("saving");
-  myFile = SD.open("test.txt", FILE_WRITE);
+  myFile = SD.open("/record.json", FILE_WRITE);
   if (myFile)
   {
-    myFile.println("testing 1, 2, 3.");
     myFile.close();
-    Serial.println("saved");
+  }
+}
+void sd_card::save_counters_value(const String& jsonString)
+{
+  myFile = SD.open("/record.json", FILE_APPEND);
+  {
+    myFile.println(jsonString.c_str());
+    myFile.close();
   }
 }
 

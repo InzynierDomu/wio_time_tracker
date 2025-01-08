@@ -4,7 +4,6 @@
 #include "time_category.h"
 
 #include <ArduinoJson.h>
-#include <vector>
 
 class counters_generator
 {
