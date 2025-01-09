@@ -15,6 +15,11 @@ time_counter& time_category::get_current_counter()
   return counters[actual_position];
 }
 
+time_counter& time_category::get_counter(uint8_t position)
+{
+  return counters[position];
+}
+
 void time_category::update_current_time(DateTime& current_time)
 {
   time_counter& current = get_current_counter();

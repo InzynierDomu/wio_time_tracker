@@ -26,6 +26,7 @@ class time_category
   String get_name(uint8_t position);
   uint16_t get_sum_minutes(uint8_t position);
   time_counter& get_current_counter();
+  time_counter& get_counter(uint8_t position);
   void update_current_time(DateTime& current_time);
   void reset_current_time();
   void clear_sum_times();

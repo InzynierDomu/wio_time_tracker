@@ -52,6 +52,14 @@ time_category counters_chill;
 
 std::map<Mode, time_category> times;
 
+void save_counters_sd()
+{
+  counters_saver saver(times[Mode::work], "work");
+  auto parser = [&](String& json) { saver.parse(json); };
+  sd.clear_file();
+  sd.save_counters_value(parser);
+}
+
 void check_button()
 {
   static unsigned long last_button_press_time = 0;
@@ -62,15 +70,28 @@ void check_button()
     return;
   }
 
+  // Sprawdzenie, czy którykolwiek przycisk został naciśnięty
   if (digitalRead(WIO_5S_UP) == LOW || digitalRead(WIO_5S_DOWN) == LOW || digitalRead(WIO_5S_PRESS) == LOW ||
       digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW)
   {
     last_button_press_time = current_time;
   }
 
+  auto handle_mode_change = [&](Mode new_mode) {
+    auto& old_counter = times[m_mode];
+    running = false;
+    old_counter.reset_current_time();
+    m_gui.refresh_left_side(running, old_counter.get_current_counter(), rtc.now());
+
+    m_mode = new_mode;
+    auto& counter = times[m_mode];
+    m_gui.print_side_menu(counter);
+    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+  };
+
+  auto& counter = times[m_mode];
   if (digitalRead(WIO_5S_UP) == LOW)
   {
-    auto& counter = times[m_mode];
     if (counter.check_min_position())
     {
       counter.actual_position--;
@@ -82,7 +103,6 @@ void check_button()
   }
   else if (digitalRead(WIO_5S_DOWN) == LOW)
   {
-    auto& counter = times[m_mode];
     if (counter.check_max_position())
     {
       counter.actual_position++;
@@ -94,7 +114,6 @@ void check_button()
   }
   else if (digitalRead(WIO_5S_PRESS) == LOW)
   {
-    auto& counter = times[m_mode];
     counter.get_current_counter().start_time = rtc.now();
     running = !running;
     if (!running)
@@ -102,36 +121,19 @@ void check_button()
       counter.reset_current_time();
     }
     m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    save_counters_sd();
   }
   else if (digitalRead(WIO_KEY_C) == LOW)
   {
-    m_mode = Mode::chill;
-    auto& counter = times[m_mode];
-    m_gui.print_side_menu(counter);
-    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    handle_mode_change(Mode::chill);
   }
   else if (digitalRead(WIO_KEY_B) == LOW)
   {
-    auto& old_counter = times[m_mode];
-    running = false;
-    old_counter.reset_current_time();
-    m_gui.refresh_left_side(running, old_counter.get_current_counter(), rtc.now());
-
-    m_mode = Mode::work;
-    auto& counter = times[m_mode];
-    m_gui.print_side_menu(counter);
-    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    handle_mode_change(Mode::work);
   }
   else if (digitalRead(WIO_KEY_A) == LOW)
   {
-    auto& old_counter = times[m_mode];
-    running = false;
-    old_counter.reset_current_time();
-
-    m_mode = Mode::meeting;
-    auto& counter = times[m_mode];
-    m_gui.print_side_menu(counter);
-    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    handle_mode_change(Mode::meeting);
   }
 }
 
