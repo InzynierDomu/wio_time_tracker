@@ -52,12 +52,21 @@ time_category counters_chill;
 
 std::map<Mode, time_category> times;
 
+void parse_mode(Mode mode, String name)
+{
+  counters_saver saver(times[mode], name);
+  auto parser = [&](String& json) { saver.parse(json); };
+  sd.save_counters_value(parser);
+}
+
 void save_counters_sd()
 {
-  counters_saver saver(times[Mode::work], "work");
-  auto parser = [&](String& json) { saver.parse(json); };
   sd.clear_file();
-  sd.save_counters_value(parser);
+  sd.add_file_border();
+  parse_mode(Mode::work, "work");
+  parse_mode(Mode::meeting, "meeting");
+  parse_mode(Mode::chill, "chill");
+  sd.add_file_border();
 }
 
 void check_button()

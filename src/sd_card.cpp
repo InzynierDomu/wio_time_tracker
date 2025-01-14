@@ -17,6 +17,15 @@ void sd_card::clear_file()
     myFile.close();
   }
 }
+
+void sd_card::add_file_border()
+{
+  myFile = SD.open("/record.json", FILE_APPEND);
+  {
+    myFile.println("---");
+    myFile.close();
+  }
+}
 void sd_card::save_counters_value(const std::function<void(String&)>& parser)
 {
   myFile = SD.open("/record.json", FILE_APPEND);

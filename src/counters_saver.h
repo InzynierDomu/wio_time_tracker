@@ -2,7 +2,6 @@
 
 #include "time_category.h"
 
-#include <ArduinoJson.h>
 #include <functional>
 
 class counters_saver
