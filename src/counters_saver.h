@@ -11,7 +11,7 @@ class counters_saver
   : counters(counters)
   , name(name)
   {}
-  void parse(String& json);
+  void parse(String& line);
 
   private:
   time_category& counters;
