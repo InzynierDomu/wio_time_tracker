@@ -1,5 +1,6 @@
 #include "DateTime.h"
 #include "RTC_SAMD51.h"
+#include "config.h"
 #include "counters_generator.h"
 #include "counters_saver.h"
 #include "gui.h"
@@ -33,7 +34,6 @@ enum class Mode
 };
 
 RTC_SAMD51 rtc;
-// TFT_eSPI m_screen; ///< TFT screen 320x240
 gui m_gui;
 sd_card sd;
 
@@ -79,7 +79,6 @@ void check_button()
     return;
   }
 
-  // Sprawdzenie, czy którykolwiek przycisk został naciśnięty
   if (digitalRead(WIO_5S_UP) == LOW || digitalRead(WIO_5S_DOWN) == LOW || digitalRead(WIO_5S_PRESS) == LOW ||
       digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW)
   {
@@ -96,6 +95,7 @@ void check_button()
     auto& counter = times[m_mode];
     m_gui.print_side_menu(counter);
     m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    save_counters_sd();
   };
 
   auto& counter = times[m_mode];
@@ -130,7 +130,6 @@ void check_button()
       counter.reset_current_time();
     }
     m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    save_counters_sd();
   }
   else if (digitalRead(WIO_KEY_C) == LOW)
   {
@@ -146,6 +145,18 @@ void check_button()
   }
 }
 
+String cover_data_to_name(DateTime& date)
+{
+  String name = "/";
+  name += String(date.day());
+  name += "-";
+  name += String(date.month());
+  name += "-";
+  name += String(date.year());
+  name += ".md";
+  return name;
+}
+
 void check_date(DateTime date)
 {
   auto now = rtc.now();
@@ -155,6 +166,7 @@ void check_date(DateTime date)
     counters_work.clear_sum_times();
     counters_chill.clear_sum_times();
     counters_meetings.clear_sum_times();
+    sd.set_save_data_file_name(cover_data_to_name(m_date));
   }
 }
 
@@ -184,9 +196,10 @@ void setup()
   m_gui.print_date_time(running, m_date);
 
   sd.init();
+  sd.set_save_data_file_name(cover_data_to_name(m_date));
 
   counters_generator parser(counters_work, counters_meetings, counters_chill);
-  if (!sd.load_counters_tree("/data.json", [&](const String& line) { parser.processLine(line); }))
+  if (!sd.load_counters_tree(config::counter_list_path, [&](const String& line) { parser.processLine(line); }))
   {
     // error
   }

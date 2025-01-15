@@ -7,6 +7,9 @@ void counters_saver::parse(String& json)
   {
     json += counters.get_name(i);
     json += counters.get_sum_minutes(i);
-    json += "\n";
+    if (i < count - 1)
+    {
+      json += "\n";
+    }
   }
 }

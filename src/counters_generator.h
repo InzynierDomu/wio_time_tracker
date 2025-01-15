@@ -8,10 +8,10 @@
 class counters_generator
 {
   public:
-  counters_generator(time_category& list1, time_category& list2, time_category& list3)
-  : list1(list1)
-  , list2(list2)
-  , list3(list3)
+  counters_generator(time_category& work, time_category& meeting, time_category& chill)
+  : work(work)
+  , meeting(meeting)
+  , chill(chill)
   {}
 
   void processLine(const String& line);
@@ -19,7 +19,7 @@ class counters_generator
   private:
   void appendToVector(const JsonArray& array, time_category& vec);
 
-  time_category& list1;
-  time_category& list2;
-  time_category& list3;
+  time_category& work;
+  time_category& meeting;
+  time_category& chill;
 };

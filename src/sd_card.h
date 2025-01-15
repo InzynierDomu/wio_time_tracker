@@ -12,6 +12,7 @@ class sd_card
   sd_card() {}
 
   void init();
+  void set_save_data_file_name(String file_name);
   void clear_file();
   void add_file_border();
   void save_counters_value(const std::function<void(String&)>& parser);
@@ -19,4 +20,5 @@ class sd_card
 
   private:
   File myFile;
+  String save_file_name;
 };

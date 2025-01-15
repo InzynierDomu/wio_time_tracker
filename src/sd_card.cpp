@@ -9,9 +9,14 @@ void sd_card::init()
   }
 }
 
+void sd_card::set_save_data_file_name(String file_name)
+{
+  save_file_name = file_name;
+}
+
 void sd_card::clear_file()
 {
-  myFile = SD.open("/record.json", FILE_WRITE);
+  myFile = SD.open(save_file_name, FILE_WRITE);
   if (myFile)
   {
     myFile.close();
@@ -20,7 +25,7 @@ void sd_card::clear_file()
 
 void sd_card::add_file_border()
 {
-  myFile = SD.open("/record.json", FILE_APPEND);
+  myFile = SD.open(save_file_name, FILE_APPEND);
   {
     myFile.println("---");
     myFile.close();
@@ -28,7 +33,7 @@ void sd_card::add_file_border()
 }
 void sd_card::save_counters_value(const std::function<void(String&)>& parser)
 {
-  myFile = SD.open("/record.json", FILE_APPEND);
+  myFile = SD.open(save_file_name, FILE_APPEND);
   {
     String line;
     parser(line);

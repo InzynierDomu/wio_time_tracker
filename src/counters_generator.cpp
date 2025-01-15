@@ -6,13 +6,13 @@ void counters_generator::processLine(const String& line)
   DeserializationError error = deserializeJson(doc, line);
   if (error)
   {
-    //error
+    // error
     return;
   }
 
-  appendToVector(doc["list1"].as<JsonArray>(), list1);
-  appendToVector(doc["list2"].as<JsonArray>(), list2);
-  appendToVector(doc["list3"].as<JsonArray>(), list3);
+  appendToVector(doc["work"].as<JsonArray>(), work);
+  appendToVector(doc["meeting"].as<JsonArray>(), meeting);
+  appendToVector(doc["chill"].as<JsonArray>(), chill);
 }
 
 void counters_generator::appendToVector(const JsonArray& array, time_category& vec)
