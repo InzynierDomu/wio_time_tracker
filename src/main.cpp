@@ -162,12 +162,17 @@ void check_date(DateTime date)
   auto now = rtc.now();
   if (now.day() != date.day())
   {
-    m_date = now;
     counters_work.clear_sum_times();
     counters_chill.clear_sum_times();
     counters_meetings.clear_sum_times();
-    sd.set_save_data_file_name(cover_data_to_name(m_date));
+
+    auto& counter = times[m_mode];
+    m_gui.refresh_left_side(running, counter.get_current_counter(), now);
+
+    sd.set_save_data_file_name(cover_data_to_name(now));
+    save_counters_sd();
   }
+  m_date = now;
 }
 
 uint16_t timespan_to_minutes(const TimeSpan& span)
@@ -228,8 +233,7 @@ void loop()
       counter.update_current_time(now);
       m_gui.print_time(running, counter.get_current_counter());
     }
-    m_date = rtc.now();
-    m_gui.print_date_time(running, m_date);
     check_date(m_date);
+    m_gui.print_date_time(running, m_date);
   }
 }

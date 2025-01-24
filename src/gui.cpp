@@ -30,10 +30,20 @@ void gui::print_side_menu(time_category& counters)
 void gui::print_time(bool is_running, time_counter& counter)
 {
   m_screen.setFreeFont(&FreeSansBold24pt7b);
-  clear_part_screen(is_running, 80, 50, 60, 110);
-  m_screen.drawString(String(counter.current_minutes), 80, 50);
 
-  m_screen.drawString(String(counter.sum_minutes), 80, 110);
+  const int screen_center_x = 80;
+
+  int current_minutes_width = m_screen.textWidth(String(counter.current_minutes));
+  int sum_minutes_width = m_screen.textWidth(String(counter.sum_minutes));
+
+  int current_minutes_x = screen_center_x - (current_minutes_width / 2);
+  int sum_minutes_x = screen_center_x - (sum_minutes_width / 2);
+
+  clear_part_screen(is_running, screen_center_x - 50, 50, 100, 60); 
+  clear_part_screen(is_running, screen_center_x - 50, 110, 100, 60);
+
+  m_screen.drawString(String(counter.current_minutes), current_minutes_x, 50);
+  m_screen.drawString(String(counter.sum_minutes), sum_minutes_x, 110);
 }
 
 void gui::print_date_time(bool is_running, DateTime date_time)
