@@ -80,7 +80,8 @@ void check_button()
   }
 
   if (digitalRead(WIO_5S_UP) == LOW || digitalRead(WIO_5S_DOWN) == LOW || digitalRead(WIO_5S_PRESS) == LOW ||
-      digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW)
+      digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW || digitalRead(WIO_5S_LEFT) == LOW ||
+      digitalRead(WIO_5S_RIGHT) == LOW)
   {
     last_button_press_time = current_time;
   }
@@ -143,6 +144,22 @@ void check_button()
   {
     handle_mode_change(Mode::meeting);
   }
+  else if (digitalRead(WIO_5S_LEFT) == LOW)
+  {
+    if (running)
+    {
+      counter.increse_sum_minutes(counter.actual_position);
+      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    }
+  }
+  else if (digitalRead(WIO_5S_RIGHT) == LOW)
+  {
+    if (running)
+    {
+      counter.decrese_sum_minutes(counter.actual_position);
+      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+    }
+  }
 }
 
 String cover_data_to_name(DateTime& date)
@@ -162,9 +179,10 @@ void check_date(DateTime date)
   auto now = rtc.now();
   if (now.day() != date.day())
   {
-    counters_work.clear_sum_times();
-    counters_chill.clear_sum_times();
-    counters_meetings.clear_sum_times();
+    for (auto& [mode, counter] : times)
+    {
+      counter.clear_sum_times();
+    }
 
     auto& counter = times[m_mode];
     m_gui.refresh_left_side(running, counter.get_current_counter(), now);

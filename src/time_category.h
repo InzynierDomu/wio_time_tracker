@@ -25,6 +25,8 @@ class time_category
   public:
   String get_name(uint8_t position);
   uint16_t get_sum_minutes(uint8_t position);
+  void increse_sum_minutes(uint8_t position);
+  void decrese_sum_minutes(uint8_t position);
   time_counter& get_current_counter();
   time_counter& get_counter(uint8_t position);
   void update_current_time(DateTime& current_time);
