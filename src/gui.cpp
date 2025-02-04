@@ -31,7 +31,7 @@ void gui::print_time(bool is_running, time_counter& counter)
 {
   m_screen.setFreeFont(&FreeSansBold24pt7b);
 
-  const int screen_center_x = 80;
+  const int screen_center_x = 90;
 
   int current_minutes_width = m_screen.textWidth(String(counter.current_minutes));
   int sum_minutes_width = m_screen.textWidth(String(counter.sum_minutes));
@@ -39,7 +39,7 @@ void gui::print_time(bool is_running, time_counter& counter)
   int current_minutes_x = screen_center_x - (current_minutes_width / 2);
   int sum_minutes_x = screen_center_x - (sum_minutes_width / 2);
 
-  clear_part_screen(is_running, screen_center_x - 50, 50, 100, 60); 
+  clear_part_screen(is_running, screen_center_x - 50, 50, 100, 60);
   clear_part_screen(is_running, screen_center_x - 50, 110, 100, 60);
 
   m_screen.drawString(String(counter.current_minutes), current_minutes_x, 50);

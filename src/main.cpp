@@ -14,17 +14,6 @@
 #include <map>
 #include <vector>
 
-///< possible joystick cursor moves
-enum class Cursor_action
-{
-  pause,
-  down,
-  left,
-  right,
-  center,
-  nothing
-};
-
 ///< modes which device possible running
 enum class Mode
 {
@@ -55,7 +44,7 @@ std::map<Mode, time_category> times;
 void parse_mode(Mode mode, String name)
 {
   counters_saver saver(times[mode], name);
-  auto parser = [&](String& json) { saver.parse(json); };
+  auto parser = [&](String& line) { saver.parse(line); };
   sd.save_counters_value(parser);
 }
 
@@ -102,6 +91,10 @@ void check_button()
   auto& counter = times[m_mode];
   if (digitalRead(WIO_5S_UP) == LOW)
   {
+    if (running)
+    {
+      save_counters_sd();
+    }
     if (counter.check_min_position())
     {
       counter.actual_position--;
@@ -113,6 +106,10 @@ void check_button()
   }
   else if (digitalRead(WIO_5S_DOWN) == LOW)
   {
+    if (running)
+    {
+      save_counters_sd();
+    }
     if (counter.check_max_position())
     {
       counter.actual_position++;
@@ -128,6 +125,7 @@ void check_button()
     running = !running;
     if (!running)
     {
+      save_counters_sd();
       counter.reset_current_time();
     }
     m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
@@ -148,7 +146,7 @@ void check_button()
   {
     if (running)
     {
-      counter.increse_sum_minutes(counter.actual_position);
+      counter.decrese_sum_minutes(counter.actual_position);
       m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
     }
   }
@@ -156,7 +154,7 @@ void check_button()
   {
     if (running)
     {
-      counter.decrese_sum_minutes(counter.actual_position);
+      counter.increse_sum_minutes(counter.actual_position);
       m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
     }
   }
@@ -174,11 +172,12 @@ String cover_data_to_name(DateTime& date)
   return name;
 }
 
-void check_date(DateTime date)
+void check_date()
 {
   auto now = rtc.now();
-  if (now.day() != date.day())
+  if (now.day() != m_date.day())
   {
+    save_counters_sd();
     for (auto& [mode, counter] : times)
     {
       counter.clear_sum_times();
@@ -246,12 +245,12 @@ void loop()
     last_loop_time = loop_time;
     if (running)
     {
-      DateTime now = rtc.now();
       auto& counter = times[m_mode];
+      DateTime now = rtc.now();
       counter.update_current_time(now);
       m_gui.print_time(running, counter.get_current_counter());
     }
-    check_date(m_date);
+    check_date();
     m_gui.print_date_time(running, m_date);
   }
 }
