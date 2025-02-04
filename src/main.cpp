@@ -14,6 +14,19 @@
 #include <map>
 #include <vector>
 
+enum class ButtonEvent
+{
+  None,
+  Up,
+  Down,
+  Press,
+  Left,
+  Right,
+  KeyA,
+  KeyB,
+  KeyC
+};
+
 ///< modes which device possible running
 enum class Mode
 {
@@ -58,6 +71,116 @@ void save_counters_sd()
   sd.add_file_border();
 }
 
+ButtonEvent getButtonEvent()
+{
+  if (digitalRead(WIO_5S_UP) == LOW)
+    return ButtonEvent::Up;
+  if (digitalRead(WIO_5S_DOWN) == LOW)
+    return ButtonEvent::Down;
+  if (digitalRead(WIO_5S_PRESS) == LOW)
+    return ButtonEvent::Press;
+  if (digitalRead(WIO_KEY_C) == LOW)
+    return ButtonEvent::KeyC;
+  if (digitalRead(WIO_KEY_B) == LOW)
+    return ButtonEvent::KeyB;
+  if (digitalRead(WIO_KEY_A) == LOW)
+    return ButtonEvent::KeyA;
+  if (digitalRead(WIO_5S_LEFT) == LOW)
+    return ButtonEvent::Left;
+  if (digitalRead(WIO_5S_RIGHT) == LOW)
+    return ButtonEvent::Right;
+  return ButtonEvent::None;
+}
+
+void refreshUI(time_category& counter)
+{
+  m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+}
+
+void processUpEvent(time_category& counter)
+{
+  if (running)
+  {
+    save_counters_sd();
+  }
+  if (counter.check_min_position())
+  {
+    counter.actual_position--;
+    m_gui.print_side_menu(counter);
+    running = false;
+    counter.reset_current_time();
+    refreshUI(counter);
+  }
+}
+
+void processDownEvent(time_category& counter)
+{
+  if (running)
+  {
+    save_counters_sd();
+  }
+  if (counter.check_max_position())
+  {
+    counter.actual_position++;
+    m_gui.print_side_menu(counter);
+    running = false;
+    counter.reset_current_time();
+    refreshUI(counter);
+  }
+}
+
+void processPressEvent(time_category& counter)
+{
+  counter.get_current_counter().start_time = rtc.now();
+  running = !running;
+  if (!running)
+  {
+    save_counters_sd();
+    counter.reset_current_time();
+  }
+  refreshUI(counter);
+}
+
+void processModeChange(Mode newMode)
+{
+  auto& old_counter = times[m_mode];
+  running = false;
+  old_counter.reset_current_time();
+  refreshUI(old_counter);
+
+  m_mode = newMode;
+  auto& counter = times[m_mode];
+  m_gui.print_side_menu(counter);
+  refreshUI(counter);
+  save_counters_sd();
+}
+
+void processLeftEvent(time_category& counter)
+{
+  if (running)
+  {
+    counter.decrese_sum_minutes(counter.actual_position);
+  }
+  else
+  {
+    // TBD
+  }
+  refreshUI(counter);
+}
+
+void processRightEvent(time_category& counter)
+{
+  if (running)
+  {
+    counter.increse_sum_minutes(counter.actual_position);
+  }
+  else
+  {
+    // TBD
+  }
+  refreshUI(counter);
+}
+
 void check_button()
 {
   static unsigned long last_button_press_time = 0;
@@ -68,95 +191,43 @@ void check_button()
     return;
   }
 
-  if (digitalRead(WIO_5S_UP) == LOW || digitalRead(WIO_5S_DOWN) == LOW || digitalRead(WIO_5S_PRESS) == LOW ||
-      digitalRead(WIO_KEY_C) == LOW || digitalRead(WIO_KEY_B) == LOW || digitalRead(WIO_KEY_A) == LOW || digitalRead(WIO_5S_LEFT) == LOW ||
-      digitalRead(WIO_5S_RIGHT) == LOW)
+  ButtonEvent event = getButtonEvent();
+  if (event == ButtonEvent::None)
   {
-    last_button_press_time = current_time;
+    return;
   }
 
-  auto handle_mode_change = [&](Mode new_mode) {
-    auto& old_counter = times[m_mode];
-    running = false;
-    old_counter.reset_current_time();
-    m_gui.refresh_left_side(running, old_counter.get_current_counter(), rtc.now());
-
-    m_mode = new_mode;
-    auto& counter = times[m_mode];
-    m_gui.print_side_menu(counter);
-    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    save_counters_sd();
-  };
+  last_button_press_time = current_time;
 
   auto& counter = times[m_mode];
-  if (digitalRead(WIO_5S_UP) == LOW)
+  switch (event)
   {
-    if (running)
-    {
-      save_counters_sd();
-    }
-    if (counter.check_min_position())
-    {
-      counter.actual_position--;
-      m_gui.print_side_menu(counter);
-      running = false;
-      counter.reset_current_time();
-      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    }
-  }
-  else if (digitalRead(WIO_5S_DOWN) == LOW)
-  {
-    if (running)
-    {
-      save_counters_sd();
-    }
-    if (counter.check_max_position())
-    {
-      counter.actual_position++;
-      m_gui.print_side_menu(counter);
-      running = false;
-      counter.reset_current_time();
-      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    }
-  }
-  else if (digitalRead(WIO_5S_PRESS) == LOW)
-  {
-    counter.get_current_counter().start_time = rtc.now();
-    running = !running;
-    if (!running)
-    {
-      save_counters_sd();
-      counter.reset_current_time();
-    }
-    m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-  }
-  else if (digitalRead(WIO_KEY_C) == LOW)
-  {
-    handle_mode_change(Mode::chill);
-  }
-  else if (digitalRead(WIO_KEY_B) == LOW)
-  {
-    handle_mode_change(Mode::work);
-  }
-  else if (digitalRead(WIO_KEY_A) == LOW)
-  {
-    handle_mode_change(Mode::meeting);
-  }
-  else if (digitalRead(WIO_5S_LEFT) == LOW)
-  {
-    if (running)
-    {
-      counter.decrese_sum_minutes(counter.actual_position);
-      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    }
-  }
-  else if (digitalRead(WIO_5S_RIGHT) == LOW)
-  {
-    if (running)
-    {
-      counter.increse_sum_minutes(counter.actual_position);
-      m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
-    }
+    case ButtonEvent::Up:
+      processUpEvent(counter);
+      break;
+    case ButtonEvent::Down:
+      processDownEvent(counter);
+      break;
+    case ButtonEvent::Press:
+      processPressEvent(counter);
+      break;
+    case ButtonEvent::KeyC:
+      processModeChange(Mode::chill);
+      break;
+    case ButtonEvent::KeyB:
+      processModeChange(Mode::work);
+      break;
+    case ButtonEvent::KeyA:
+      processModeChange(Mode::meeting);
+      break;
+    case ButtonEvent::Left:
+      processLeftEvent(counter);
+      break;
+    case ButtonEvent::Right:
+      processRightEvent(counter);
+      break;
+    default:
+      break;
   }
 }
 
