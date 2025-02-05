@@ -6,6 +6,13 @@
 #include <Seeed_FS.h>
 #include <functional>
 
+struct wifi_info
+{
+  String ssid;
+  String pass;
+};
+
+
 class sd_card
 {
   public:
@@ -17,6 +24,7 @@ class sd_card
   void add_file_border();
   void save_counters_value(const std::function<void(String&)>& parser);
   bool load_counters_tree(const String& fileName, const std::function<void(const String&)>& processLine);
+  wifi_info load_wifi_config(const String& fileName);
 
   private:
   File myFile;

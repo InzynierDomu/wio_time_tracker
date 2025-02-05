@@ -8,6 +8,7 @@
 #include "time_category.h"
 
 #include <Arduino.h>
+#include <rpcWiFi.h>
 
 #undef min
 #undef max
@@ -304,6 +305,22 @@ void setup()
   auto counter = times[m_mode];
   m_gui.print_side_menu(counter);
   m_gui.print_time(running, counter.get_current_counter());
+
+  wifi_info wifi_secrets = sd.load_wifi_config(config::wifi_config_path);
+  Serial.begin(115200);
+
+  char* ssid = strdup(wifi_secrets.ssid.c_str());
+  char* pass = strdup(wifi_secrets.pass.c_str());
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.println(ssid);
+    Serial.println(pass);
+    WiFi.begin(ssid, pass);
+  }
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop()

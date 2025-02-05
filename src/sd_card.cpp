@@ -74,3 +74,19 @@ bool sd_card::load_counters_tree(const String& fileName, const std::function<voi
   file.close();
   return true;
 }
+
+wifi_info sd_card::load_wifi_config(const String& fileName)
+{
+  File file = SD.open(fileName, FILE_READ);
+  wifi_info info;
+  if (file)
+  {
+    info.ssid = file.readStringUntil('\n'); // for ssid
+    info.ssid.trim();
+    info.pass = file.readStringUntil('\n'); // for pass
+    info.pass.trim();
+    file.close();
+  }
+  file.close();
+  return info;
+}
