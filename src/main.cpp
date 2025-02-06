@@ -11,7 +11,6 @@
 
 #include <Arduino.h>
 
-
 #undef min
 #undef max
 #include <map>
@@ -164,10 +163,6 @@ void processLeftEvent(time_category& counter)
   {
     counter.decrese_sum_minutes(counter.actual_position);
   }
-  else
-  {
-    // TBD
-  }
   refreshUI(counter);
 }
 
@@ -176,10 +171,6 @@ void processRightEvent(time_category& counter)
   if (running)
   {
     counter.increse_sum_minutes(counter.actual_position);
-  }
-  else
-  {
-    // TBD
   }
   refreshUI(counter);
 }
@@ -270,14 +261,9 @@ uint16_t timespan_to_minutes(const TimeSpan& span)
 {
   return static_cast<uint16_t>(span.totalseconds() / 60);
 }
-void setup()
+
+void setup_buttons()
 {
-  sd.init();
-
-  wifi_info wifi_secrets = sd.load_wifi_config(config::wifi_config_path);
-  m_clock.init(wifi_secrets);
-  m_date = m_clock.get_now();
-
   pinMode(WIO_5S_UP, INPUT);
   pinMode(WIO_5S_DOWN, INPUT);
   pinMode(WIO_5S_LEFT, INPUT);
@@ -286,25 +272,44 @@ void setup()
   pinMode(WIO_KEY_A, INPUT);
   pinMode(WIO_KEY_B, INPUT);
   pinMode(WIO_KEY_C, INPUT);
+}
 
-  m_gui.init();
-  m_gui.print_date_time(running, m_date);
-
-  sd.set_save_data_file_name(cover_data_to_name(m_date));
-
+void setup_counters()
+{
   counters_generator parser(counters_work, counters_meetings, counters_chill);
   if (!sd.load_counters_tree(config::counter_list_path, [&](const String& line) { parser.processLine(line); }))
   {
-    // error
+    // error TBD
   }
 
   times[Mode::work] = counters_work;
   times[Mode::meeting] = counters_meetings;
   times[Mode::chill] = counters_chill;
+}
 
+void init_gui()
+{
   auto counter = times[m_mode];
+  m_gui.init();
+  m_gui.print_date_time(running, m_date);
   m_gui.print_side_menu(counter);
   m_gui.print_time(running, counter.get_current_counter());
+}
+void setup()
+{
+  sd.init();
+
+  wifi_info wifi_secrets = sd.load_wifi_config(config::wifi_config_path);
+  m_clock.init(wifi_secrets);
+  m_date = m_clock.get_now();
+
+  sd.set_save_data_file_name(cover_data_to_name(m_date));
+
+  setup_buttons();
+
+  setup_counters();
+
+  init_gui();
 }
 
 void loop()
