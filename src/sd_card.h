@@ -1,17 +1,11 @@
 #pragma once
 
 #include "SD/Seeed_SD.h"
+#include "wifi_info.h"
 
 #include <SPI.h>
 #include <Seeed_FS.h>
 #include <functional>
-
-struct wifi_info
-{
-  String ssid;
-  String pass;
-};
-
 
 class sd_card
 {

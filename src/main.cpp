@@ -6,9 +6,11 @@
 #include "gui.h"
 #include "sd_card.h"
 #include "time_category.h"
+#include "time_clock.h"
+#include "wifi_info.h"
 
 #include <Arduino.h>
-#include <rpcWiFi.h>
+
 
 #undef min
 #undef max
@@ -36,7 +38,7 @@ enum class Mode
   chill
 };
 
-RTC_SAMD51 rtc;
+time_clock m_clock;
 gui m_gui;
 sd_card sd;
 
@@ -44,12 +46,6 @@ bool running = false;
 uint16_t checkt_time = 30000;
 DateTime m_date;
 unsigned long last_loop_time = millis();
-
-byte packetBuffer[config::NTP_PACKET_SIZE];
-// define WiFI client
-WiFiClient client;
-// The udp library class
-WiFiUDP udp; // buffer to hold incoming and outgoing packets
 
 const unsigned long debounce_delay = 500;
 
@@ -60,95 +56,6 @@ time_category counters_meetings;
 time_category counters_chill;
 
 std::map<Mode, time_category> times;
-
-unsigned long sendNTPpacket(const char* address)
-{
-  // set all bytes in the buffer to 0
-  for (int i = 0; i < config::NTP_PACKET_SIZE; ++i)
-  {
-    packetBuffer[i] = 0;
-  }
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  packetBuffer[0] = 0b11100011; // LI, Version, Mode
-  packetBuffer[1] = 0; // Stratum, or type of clock
-  packetBuffer[2] = 6; // Polling Interval
-  packetBuffer[3] = 0xEC; // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12] = 49;
-  packetBuffer[13] = 0x4E;
-  packetBuffer[14] = 49;
-  packetBuffer[15] = 52;
-
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  udp.beginPacket(address, 123); // NTP requests are to port 123
-  udp.write(packetBuffer, config::NTP_PACKET_SIZE);
-  udp.endPacket();
-}
-unsigned long getNTPtime()
-{
-
-  // module returns a unsigned long time valus as secs since Jan 1, 1970
-  // unix time or 0 if a problem encounted
-
-  // only send data when connected
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    // initializes the UDP state
-    // This initializes the transfer buffer
-    udp.begin(WiFi.localIP(), config::localPort);
-
-    sendNTPpacket(config::timeServer); // send an NTP packet to a time server
-    // wait to see if a reply is available
-    delay(1000);
-
-    if (udp.parsePacket())
-    {
-      Serial.println("udp packet received");
-      Serial.println("");
-      // We've received a packet, read the data from it
-      udp.read(packetBuffer, config::NTP_PACKET_SIZE); // read the packet into the buffer
-
-      // the timestamp starts at byte 40 of the received packet and is four bytes,
-      // or two words, long. First, extract the two words:
-
-      unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-      unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-      // combine the four bytes (two words) into a long integer
-      // this is NTP time (seconds since Jan 1 1900):
-      unsigned long secsSince1900 = highWord << 16 | lowWord;
-      // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-      const unsigned long seventyYears = 2208988800UL;
-      // subtract seventy years:
-      unsigned long epoch = secsSince1900 - seventyYears;
-
-      // adjust time for timezone offset in secs +/- from UTC
-      // WA time offset from UTC is +8 hours (28,800 secs)
-      // + East of GMT
-      // - West of GMT
-      long tzOffset = 3600UL;
-
-      // WA local time
-      unsigned long adjustedTime;
-      return adjustedTime = epoch + tzOffset;
-    }
-    else
-    {
-      // were not able to parse the udp packet successfully
-      // clear down the udp connection
-      udp.stop();
-      return 0; // zero indicates a failure
-    }
-    // not calling ntp time frequently, stop releases resources
-    udp.stop();
-  }
-  else
-  {
-    // network not connected
-    return 0;
-  }
-}
 
 void parse_mode(Mode mode, String name)
 {
@@ -190,7 +97,7 @@ ButtonEvent getButtonEvent()
 
 void refreshUI(time_category& counter)
 {
-  m_gui.refresh_left_side(running, counter.get_current_counter(), rtc.now());
+  m_gui.refresh_left_side(running, counter.get_current_counter(), m_clock.get_now());
 }
 
 void processUpEvent(time_category& counter)
@@ -227,7 +134,7 @@ void processDownEvent(time_category& counter)
 
 void processPressEvent(time_category& counter)
 {
-  counter.get_current_counter().start_time = rtc.now();
+  counter.get_current_counter().start_time = m_clock.get_now();
   running = !running;
   if (!running)
   {
@@ -341,7 +248,7 @@ String cover_data_to_name(DateTime& date)
 
 void check_date()
 {
-  auto now = rtc.now();
+  auto now = m_clock.get_now();
   if (now.day() != m_date.day())
   {
     save_counters_sd();
@@ -368,28 +275,8 @@ void setup()
   sd.init();
 
   wifi_info wifi_secrets = sd.load_wifi_config(config::wifi_config_path);
-
-  char* ssid = strdup(wifi_secrets.ssid.c_str());
-  char* pass = strdup(wifi_secrets.pass.c_str());
-  WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    WiFi.begin(ssid, pass);
-  }
-
-  unsigned long ntp_time;
-
-  ntp_time = getNTPtime();
-  while (ntp_time == 0)
-  {
-    ntp_time = getNTPtime();
-  }
-
-  rtc.begin();
-  rtc.adjust(ntp_time);
-
-  m_date = rtc.now();
+  m_clock.init(wifi_secrets);
+  m_date = m_clock.get_now();
 
   pinMode(WIO_5S_UP, INPUT);
   pinMode(WIO_5S_DOWN, INPUT);
@@ -431,7 +318,7 @@ void loop()
     if (running)
     {
       auto& counter = times[m_mode];
-      DateTime now = rtc.now();
+      DateTime now = m_clock.get_now();
       counter.update_current_time(now);
       m_gui.print_time(running, counter.get_current_counter());
     }
