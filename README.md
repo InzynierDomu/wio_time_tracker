@@ -16,6 +16,14 @@ The device allows to tacking the way how spend your time, for better control and
 <p>If any of my projects have helped you in your work, studies, or simply made your day better, please consider supporting my work. <strong><a href="https://tipo.live/p/inzynierdomu">LINK</a></strong></p>
 </div>
 
+### plan for new feature
+- google calendar support
+- pomodoro sessions
+- other log formats
+- easier form of synchronization
+- graphic / personalization options
+- other hardware platforms
+
 ## Manual
 TBD
 
