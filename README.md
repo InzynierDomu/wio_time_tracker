@@ -25,8 +25,35 @@ The device allows to tacking the way how spend your time, for better control and
 - other hardware platforms
 
 ## Manual
-TBD
+#### **Required Components**  
+To operate the device, an SD card is required with two configuration files, which can be found in the `SD_example` folder.  
 
+#### **WiFi Configuration**  
+`wifi.json` The device needs a WiFi network name and password to connect to the internet and synchronize its time and date.  
+
+#### **Timer Configuration**  
+`config.json` contains a list of timers categorized into three groups.  
+
+#### **Device Operation**  
+- After powering on, categories can be switched using the top buttons.  
+- Timers within a category can be navigated using the up and down arrows.  
+- To start or stop a timer, press the center button on the joystick.  
+- When a timer is running, the total daily value can be manually adjusted with right/left arrows.  
+- The display shows two timers:  
+  - **Current session time** at the top.  
+  - **Total time for the day** at the bottom.  
+
+#### **Data Storage**  
+- Timer results are saved on the SD card with filenames corresponding to the date.  
+- The saved format is currently Markdown (`.md`), compatible with the <a href="https://obsidian.md/">Obsidian</a>.
+
+### **Using the Saved Files in Obsidian**  
+- The `.md` files could be moved to a folder within your Obsidian vault.  
+- Once in Obsidian, these files can be utilized with plugins like **Database** and **Chart** to generate visualizations.  
+
+
+- Example usage for creating charts can be found in the **Obsidian_example** folder.
+- 
 ## Scheme
 TBD
 
