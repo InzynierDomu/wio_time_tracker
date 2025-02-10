@@ -50,10 +50,8 @@ To operate the device, an SD card is required with two configuration files, whic
 ### **Using the Saved Files in Obsidian**  
 - The `.md` files could be moved to a folder within your Obsidian vault.  
 - Once in Obsidian, these files can be utilized with plugins like **Database** and **Chart** to generate visualizations.  
-
-
+[!chart](https://github.com/InzynierDomu/wio_time_tracker/blob/main/Obsidian_example/chart_example.jpg)
 - Example usage for creating charts can be found in the **Obsidian_example** folder.
-- 
 ## Scheme
 TBD
 
