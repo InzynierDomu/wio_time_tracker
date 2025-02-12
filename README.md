@@ -53,7 +53,7 @@ To operate the device, an SD card is required with two configuration files, whic
 ![chart](https://github.com/InzynierDomu/wio_time_tracker/blob/main/Obsidian_example/chart_example.jpg)
 - Example usage for creating charts can be found in the **Obsidian_example** folder.
 ## Scheme
-Power supply scheme
+Power supply scheme<br>
 ![schem](https://github.com/InzynierDomu/wio_time_tracker/blob/main/time_tracker_schem.jpg)
 
 ## IDE
