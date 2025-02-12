@@ -53,7 +53,8 @@ To operate the device, an SD card is required with two configuration files, whic
 ![chart](https://github.com/InzynierDomu/wio_time_tracker/blob/main/Obsidian_example/chart_example.jpg)
 - Example usage for creating charts can be found in the **Obsidian_example** folder.
 ## Scheme
-TBD
+Power supply scheme
+![schem](https://github.com/InzynierDomu/wio_time_tracker/blob/main/time_tracker_schem.jpg)
 
 ## IDE
 The project is prepared for the Platform IO environment. A video on how to install such an environment can be watched on this [video PL](https://youtu.be/Em9NuebT2Kc).
