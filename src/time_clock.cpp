@@ -2,6 +2,8 @@
 
 void time_clock::init(wifi_info& info)
 {
+  tzOffset = info.timezone;
+
   char* ssid = strdup(info.ssid.c_str());
   char* pass = strdup(info.pass.c_str());
   WiFi.begin(ssid, pass);
@@ -54,62 +56,38 @@ unsigned long time_clock::sendNTPpacket(const char* address)
 
 unsigned long time_clock::getNTPtime()
 {
-
-  // module returns a unsigned long time valus as secs since Jan 1, 1970
-  // unix time or 0 if a problem encounted
-
-  // only send data when connected
   if (WiFi.status() == WL_CONNECTED)
   {
-    // initializes the UDP state
-    // This initializes the transfer buffer
     udp.begin(WiFi.localIP(), config::localPort);
 
-    sendNTPpacket(config::timeServer); // send an NTP packet to a time server
-    // wait to see if a reply is available
+    sendNTPpacket(config::timeServer);
     delay(1000);
 
     if (udp.parsePacket())
     {
-      // We've received a packet, read the data from it
-      udp.read(packetBuffer, config::NTP_PACKET_SIZE); // read the packet into the buffer
-
-      // the timestamp starts at byte 40 of the received packet and is four bytes,
-      // or two words, long. First, extract the two words:
+      udp.read(packetBuffer, config::NTP_PACKET_SIZE);
 
       unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
       unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-      // combine the four bytes (two words) into a long integer
-      // this is NTP time (seconds since Jan 1 1900):
+
       unsigned long secsSince1900 = highWord << 16 | lowWord;
-      // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+
       const unsigned long seventyYears = 2208988800UL;
-      // subtract seventy years:
+
       unsigned long epoch = secsSince1900 - seventyYears;
 
-      // adjust time for timezone offset in secs +/- from UTC
-      // WA time offset from UTC is +8 hours (28,800 secs)
-      // + East of GMT
-      // - West of GMT
-      long tzOffset = 3600UL;
-
-      // WA local time
-      unsigned long adjustedTime;
-      return adjustedTime = epoch + tzOffset;
+      unsigned long adjustedTime = epoch + tzOffset;
+      return adjustedTime;
     }
     else
     {
-      // were not able to parse the udp packet successfully
-      // clear down the udp connection
       udp.stop();
-      return 0; // zero indicates a failure
+      return 0;
     }
-    // not calling ntp time frequently, stop releases resources
     udp.stop();
   }
   else
   {
-    // network not connected
     return 0;
   }
 }

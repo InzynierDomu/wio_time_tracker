@@ -21,4 +21,5 @@ class time_clock
   WiFiClient client;
   WiFiUDP udp;
   byte packetBuffer[config::NTP_PACKET_SIZE];
+  long tzOffset;
 };

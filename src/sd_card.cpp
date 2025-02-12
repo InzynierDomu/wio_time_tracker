@@ -79,14 +79,7 @@ wifi_info sd_card::load_wifi_config(const String& fileName)
 {
   File file = SD.open(fileName, FILE_READ);
   wifi_info info;
-  if (file)
-  {
-    info.ssid = file.readStringUntil('\n'); // for ssid
-    info.ssid.trim();
-    info.pass = file.readStringUntil('\n'); // for pass
-    info.pass.trim();
-    file.close();
-  }
+  info.deserializeWiFiConfig(file);
   file.close();
   return info;
 }

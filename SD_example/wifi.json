@@ -1,2 +1,7 @@
-wifi_ssid
-wifi_pass
+{
+    "wifi": {
+      "ssid": "ssid",
+      "password": "password"
+    },
+    "timezone": 3600
+}
