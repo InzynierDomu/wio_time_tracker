@@ -7,20 +7,20 @@ const meeting_Praca = pages.map(p => p.meeting_work).values
 const chartData = {
     type: 'bar',
     data: {
-        labels: Names, // Etykiety osi X
+        labels: Names, 
         datasets: [
             {
-                label: 'work', // Etykieta dla segmentu "Praca"
-                data: work_Praca, // Dane dla "Praca"
-                backgroundColor: 'rgba(255, 99, 132, 0.2)', // Kolor wypełnienia dla "Praca"
-                borderColor: 'rgba(255, 99, 132, 1)', // Kolor obramowania dla "Praca"
+                label: 'work', 
+                data: work_Praca, 
+                backgroundColor: 'rgba(255, 99, 132, 0.2)', 
+                borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1,
             },
             {
-                label: 'meetings', // Etykieta dla segmentu "Spotkania"
-                data: meeting_Praca, // Dane dla "Spotkania"
-                backgroundColor: 'rgba(54, 162, 235, 0.2)', // Kolor wypełnienia dla "Spotkania"
-                borderColor: 'rgba(54, 162, 235, 1)', // Kolor obramowania dla "Spotkania"
+                label: 'meetings', 
+                data: meeting_Praca, 
+                backgroundColor: 'rgba(54, 162, 235, 0.2)', 
+                borderColor: 'rgba(54, 162, 235, 1)', 
                 borderWidth: 1,
             }
         ]
@@ -29,16 +29,16 @@ const chartData = {
         responsive: true,
         plugins: {
             legend: {
-                position: 'top', // Pozycja legendy
+                position: 'top', 
             },
         },
         scales: {
             x: {
-                stacked: true, // Włączone układanie słupków w osi X
+                stacked: true, 
             },
             y: {
-                stacked: true, // Włączone układanie słupków w osi Y
-                beginAtZero: true, // Oś Y zaczyna od zera
+                stacked: true, 
+                beginAtZero: true, 
             }
         }
     }
@@ -54,18 +54,18 @@ const Names = pages.map(p => p.file.name).values
 const work_Project = pages.map(p => p.work_project).values
 
 const chartData = {
-    type: 'line', // Wykres liniowy
+    type: 'line', 
     data: {
-        labels: Names, // Etykiety osi X
+        labels: Names, 
         datasets: [
             {
                 label: 'Project time', 
                 data: work_Project, 
-                borderColor: 'rgba(75, 192, 192, 1)', // Kolor linii
-                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Opcjonalne wypełnienie
+                borderColor: 'rgba(75, 192, 192, 1)', 
+                backgroundColor: 'rgba(75, 192, 192, 0.2)', 
                 borderWidth: 2,
-                fill: false, // Wyłącza wypełnienie pod linią
-                tension: 0.3 // Wygładzenie linii
+                fill: false, 
+                tension: 0.3 
             }
         ]
     },
@@ -78,7 +78,7 @@ const chartData = {
         },
         scales: {
             y: {
-                beginAtZero: true, // Skala Y zaczyna od 0
+                beginAtZero: true, 
             }
         }
     }

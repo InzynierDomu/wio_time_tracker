@@ -289,14 +289,13 @@ void setup_counters()
 
 void init_gui()
 {
-  auto counter = times[m_mode];
   m_gui.init();
-  m_gui.print_date_time(running, m_date);
-  m_gui.print_side_menu(counter);
-  m_gui.print_time(running, counter.get_current_counter());
+  m_gui.print_welcome();
 }
 void setup()
 {
+  init_gui();
+
   sd.init();
 
   wifi_info wifi_secrets = sd.load_wifi_config(config::wifi_config_path);
@@ -309,7 +308,9 @@ void setup()
 
   setup_counters();
 
-  init_gui();
+  auto counter = times[m_mode];
+  m_gui.refresh_left_side(running, counter.get_current_counter(), m_date);
+  m_gui.print_side_menu(counter);
 }
 
 void loop()

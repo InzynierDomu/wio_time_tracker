@@ -1,5 +1,7 @@
 #include "gui.h"
 
+#include "graph/logo.h"
+
 void gui::init()
 {
   m_screen.begin();
@@ -70,6 +72,13 @@ void gui::print_date_time(bool is_running, DateTime date_time)
   m_screen.drawString(text, 60, 210);
 }
 
+void gui::print_welcome()
+{
+  print_logo(20, 100);
+  m_screen.setFreeFont(&FreeSansBold18pt7b);
+  m_screen.drawString("Loading...", 80, 120);
+}
+
 void gui::print_list_counters(time_category& counters)
 {
   uint8_t posY = 10;
@@ -96,4 +105,18 @@ void gui::clear_part_screen(bool is_running, const uint16_t position_x, const ui
 String gui::format_two_digits(uint8_t number)
 {
   return (number < 10) ? "0" + String(number) : String(number);
+}
+
+void gui::print_logo(const uint16_t position_x, const uint16_t position_y)
+{
+  m_screen.startWrite();
+  for (int j = 0; j < logo_id::height; j++)
+  {
+    for (int i = 0; i < logo_id::width; i++)
+    {
+      uint16_t color = pgm_read_word(&logo_id::bitmap[j * logo_id::width + i]);
+      m_screen.drawPixel(position_x + i, position_y + j, color);
+    }
+  }
+  m_screen.endWrite();
 }
