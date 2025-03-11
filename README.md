@@ -9,6 +9,9 @@
 
 The device allows to tacking the way how spend your time, for better control and analysis.
 
+📖 <a href="https://www.inzynierdomu.pl/time-tracker/">note about project (PL)</a>
+📽️ <a href="https://youtu.be/ewLOCsiKkyg">short video with project (PL)</a>
+
 <div align="center">
 <h2>Support</h2>
 
